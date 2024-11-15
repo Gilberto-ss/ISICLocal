@@ -30,6 +30,7 @@ public class AlumnosBD {
      String correo;
      int telefono;
      String direccion;
+     boolean activo;
 
         public Long getId() {
             return id;
@@ -86,7 +87,15 @@ public class AlumnosBD {
         public void setDireccion(String direccion) {
             this.direccion = direccion;
         }
-     
+
+    public boolean isActivo() {
+        return activo;
+    }
+
+    public void setActivo(boolean activo) {
+        this.activo = activo;
+    }
+        
      
 }
 
