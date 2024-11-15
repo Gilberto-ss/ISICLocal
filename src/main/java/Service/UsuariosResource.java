@@ -130,5 +130,76 @@ public Response guardar(@FormParam("nombre_usuario") String nombre_usuario,
             if (session != null) session.close();
         }
     }
+    @POST
+    @Path("editar")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response editar(@FormParam("id") int id,
+                           @FormParam("nombre_usuario") String nombre_usuario,
+                           @FormParam("contraseña") String contraseña,
+                           @FormParam("rol") String rol,
+                           @FormParam("correo") String correo,
+                           @FormParam("fecha_creacion") Date fecha_creacion,
+                           @FormParam("estado") String estado,
+                           @FormParam("fecha_ultimo_acceso") Date fecha_ultimo_acceso,
+                           @FormParam("activo") int activo) {
+        Session session = null;
+        Transaction transaction = null;
+
+        if (id <= 0) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                           .entity("{\"error\":\"El campo 'id' es obligatorio y debe ser mayor a cero.\"}")
+                           .build();
+        }
+
+        try {
+            session = sessionFactory.openSession();
+            transaction = session.beginTransaction();
+
+            UsuariosBD usuario = session.get(UsuariosBD.class, id);
+            if (usuario == null) {
+                return Response.status(Response.Status.NOT_FOUND)
+                               .entity("{\"error\":\"Usuario no encontrado.\"}")
+                               .build();
+            }
+
+            if (nombre_usuario != null && !nombre_usuario.trim().isEmpty()) {
+                usuario.setNombre_usuario(nombre_usuario);
+            }
+            if (contraseña != null && !contraseña.trim().isEmpty()) {
+                usuario.setContraseña(contraseña);
+            }
+            if (rol != null) {
+                usuario.setRol(rol);
+            }
+            if (correo != null && !correo.trim().isEmpty()) {
+                usuario.setCorreo(correo);
+            }
+            if (fecha_creacion != null) {
+                usuario.setFecha_creacion(fecha_creacion);
+            }
+            if (estado != null && !estado.trim().isEmpty()) {
+                usuario.setEstado(estado);
+            }
+            if (fecha_ultimo_acceso != null) {
+                usuario.setFecha_ultimo_acceso(fecha_ultimo_acceso);
+            }
+            usuario.setActivo(true);
+
+            session.update(usuario);
+            transaction.commit();
+
+            return Response.ok("{\"message\":\"Usuario actualizado exitosamente\"}")
+                           .build();
+        } catch (Exception e) {
+            if (transaction != null) transaction.rollback();
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                           .entity("{\"error\":\"Error al actualizar el usuario\"}")
+                           .build();
+        } finally {
+            if (session != null) session.close();
+        }
+    }
+
 
 }
