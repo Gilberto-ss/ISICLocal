@@ -26,7 +26,7 @@ public class PagosBD {
     double monto;
     Date fecha_pago;
     String metodo_pago;
-    boolean activos;
+    boolean activo;
 
     public Long getId() {
         return id;
@@ -69,11 +69,11 @@ public class PagosBD {
     }
 
     public boolean isActivos() {
-        return activos;
+        return activo;
     }
 
     public void setActivos(boolean activos) {
-        this.activos = activos;
+        this.activo = activos;
     }
     
 }

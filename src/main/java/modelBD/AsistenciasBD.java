@@ -26,7 +26,7 @@ public class AsistenciasBD {
      int id_alumno;
      Date fecha;
      boolean asistencia;
-     boolean activos;
+     boolean activo;
 
     public Long getId() {
         return id;
@@ -61,11 +61,11 @@ public class AsistenciasBD {
     }
 
     public boolean isActivos() {
-        return activos;
+        return activo;
     }
 
     public void setActivos(boolean activos) {
-        this.activos = activos;
+        this.activo = activos;
     }
      
      
