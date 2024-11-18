@@ -26,67 +26,76 @@ public class AlumnosBD {
     
      String nombre;
      String apellido;
+     int matricula;
      Date fecha_nacimiento;
      String correo;
      int telefono;
      String direccion;
      boolean activo;
 
-        public Long getId() {
-            return id;
-        }
+    public Long getId() {
+        return id;
+    }
 
-        public void setId(Long id) {
-            this.id = id;
-        }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-        public String getNombre() {
-            return nombre;
-        }
+    public String getNombre() {
+        return nombre;
+    }
 
-        public void setNombre(String nombre) {
-            this.nombre = nombre;
-        }
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
 
-        public String getApellido() {
-            return apellido;
-        }
+    public String getApellido() {
+        return apellido;
+    }
 
-        public void setApellido(String apellido) {
-            this.apellido = apellido;
-        }
+    public void setApellido(String apellido) {
+        this.apellido = apellido;
+    }
 
-        public Date getFecha_nacimiento() {
-            return fecha_nacimiento;
-        }
+    public int getMatricula() {
+        return matricula;
+    }
 
-        public void setFecha_nacimiento(Date fecha_nacimiento) {
-            this.fecha_nacimiento = fecha_nacimiento;
-        }
+    public void setMatricula(int matricula) {
+        this.matricula = matricula;
+    }
 
-        public String getCorreo() {
-            return correo;
-        }
+    public Date getFecha_nacimiento() {
+        return fecha_nacimiento;
+    }
 
-        public void setCorreo(String correo) {
-            this.correo = correo;
-        }
+    public void setFecha_nacimiento(Date fecha_nacimiento) {
+        this.fecha_nacimiento = fecha_nacimiento;
+    }
 
-        public int getTelefono() {
-            return telefono;
-        }
+    public String getCorreo() {
+        return correo;
+    }
 
-        public void setTelefono(int telefono) {
-            this.telefono = telefono;
-        }
+    public void setCorreo(String correo) {
+        this.correo = correo;
+    }
 
-        public String getDireccion() {
-            return direccion;
-        }
+    public int getTelefono() {
+        return telefono;
+    }
 
-        public void setDireccion(String direccion) {
-            this.direccion = direccion;
-        }
+    public void setTelefono(int telefono) {
+        this.telefono = telefono;
+    }
+
+    public String getDireccion() {
+        return direccion;
+    }
+
+    public void setDireccion(String direccion) {
+        this.direccion = direccion;
+    }
 
     public boolean isActivo() {
         return activo;
@@ -95,7 +104,6 @@ public class AlumnosBD {
     public void setActivo(boolean activo) {
         this.activo = activo;
     }
-        
-     
+
 }
 

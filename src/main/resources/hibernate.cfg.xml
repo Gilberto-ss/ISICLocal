@@ -14,8 +14,10 @@
        
        
        
-       <mapping class="com.mycompany.wsisic.modelosbd.vehiculoBD"/>
-     
+       <mapping class="modelBD.UsuariosBD"/>
+       <mapping class="modelBD.AsistenciasBD"/>
+       <mapping class="modelBD.PagosBD"/>
+       <mapping class="modelBD.AlumnosBD"/>
 
 
     </session-factory>

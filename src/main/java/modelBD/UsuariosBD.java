@@ -27,7 +27,6 @@ public class UsuariosBD {
     String rol;
     String correo;
     Date fecha_creacion;
-    String estado;
     Date fecha_ultimo_acceso;
     boolean activo;
 
@@ -78,15 +77,6 @@ public class UsuariosBD {
     public void setFecha_creacion(Date fecha_creacion) {
         this.fecha_creacion = fecha_creacion;
     }
-
-    public String getEstado() {
-        return estado;
-    }
-
-    public void setEstado(String estado) {
-        this.estado = estado;
-    }
-
     public Date getFecha_ultimo_acceso() {
         return fecha_ultimo_acceso;
     }

@@ -5,6 +5,7 @@
 package Service;
 
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
@@ -37,31 +38,60 @@ private static SessionFactory sessionFactory;
     }
 @POST
 @Path("guardar")
+@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 @Produces(MediaType.APPLICATION_JSON)
 public Response guardar(@FormParam("nombre_usuario") String nombre_usuario,
                         @FormParam("contraseña") String contraseña,
                         @FormParam("rol") String rol,
                         @FormParam("correo") String correo,
-                        @FormParam("fecha_creacion") Date fecha_creacion,
-                        @FormParam("estado") String estado,
-                        @FormParam("fecha_ultimo_acceso") Date fecha_ultimo_acceso,
+                        @FormParam("fecha_creacion") String fecha_creacion,
+                        @FormParam("fecha_ultimo_acceso") String fecha_ultimo_acceso,
                         @FormParam("activo") int activo) {
-    Session session = null;
-    Transaction transaction = null;
 
-    if (nombre_usuario == null || nombre_usuario.trim().isEmpty() ||
-        contraseña == null || contraseña.trim().isEmpty() ||
-        rol == null || correo == null || correo.trim().isEmpty() ||
-        fecha_creacion == null ||
-        estado == null || estado.trim().isEmpty() ||
-        fecha_ultimo_acceso == null) {
-
+    if (nombre_usuario == null || nombre_usuario.trim().isEmpty()) {
         return Response.status(Response.Status.BAD_REQUEST)
-                       .entity("{\"error\":\"Todos los campos son obligatorios.\"}")
-                       .build();
+                .entity("{\"error\":\"nombre_usuario es obligatorio.\"}")
+                .build();
+    }
+    if (contraseña == null || contraseña.trim().isEmpty()) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"contraseña es obligatoria.\"}")
+                .build();
+    }
+    if (rol == null || rol.trim().isEmpty()) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"rol es obligatorio.\"}")
+                .build();
+    }
+    if (correo == null || correo.trim().isEmpty()) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"correo es obligatorio.\"}")
+                .build();
+    }
+    if (fecha_creacion == null || fecha_creacion.trim().isEmpty()) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"fecha_creacion es obligatoria.\"}")
+                .build();
+    }
+    if (fecha_ultimo_acceso == null || fecha_ultimo_acceso.trim().isEmpty()) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"fecha_ultimo_acceso es obligatoria.\"}")
+                .build();
     }
 
+    if (activo == 0) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"activo es obligatorio y debe ser mayor a 0.\"}")
+                .build();
+    }
+
+    Session session = null;
+    Transaction transaction = null;
     try {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date fechaCreacionParsed = dateFormat.parse(fecha_creacion);
+        Date fechaUltimoAccesoParsed = dateFormat.parse(fecha_ultimo_acceso);
+
         session = sessionFactory.openSession();
         transaction = session.beginTransaction();
 
@@ -70,136 +100,144 @@ public Response guardar(@FormParam("nombre_usuario") String nombre_usuario,
         usuario.setContraseña(contraseña);
         usuario.setRol(rol);
         usuario.setCorreo(correo);
-        usuario.setFecha_creacion(fecha_creacion);
-        usuario.setEstado(estado);
-        usuario.setFecha_ultimo_acceso(fecha_ultimo_acceso);
+        usuario.setFecha_creacion(fechaCreacionParsed);
+        usuario.setFecha_ultimo_acceso(fechaUltimoAccesoParsed);
+        usuario.setActivo(activo == 1);  
 
         session.save(usuario);
         transaction.commit();
 
         return Response.ok("{\"message\":\"Usuario guardado exitosamente\"}")
                        .build();
-    } catch(Exception e){
-     if (transaction != null) transaction.rollback();
+
+    } catch (Exception e) {
+    if (transaction != null) transaction.rollback();
+    // Imprime la traza completa para obtener detalles
+    e.printStackTrace();
+    return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                   .entity("{\"error\":\"No se pudo guardar el usuario: " + e.getClass().getName() + " - " + e.getMessage() + "\"}")
+                   .build();
+} finally {
+        if (session != null) session.close();
+    }
+}
+
+    @GET
+    @Path("eliminar")
+@Produces(MediaType.APPLICATION_JSON)
+public Response eliminar(@QueryParam("id") int id) {
+    Session session = null;
+    Transaction transaction = null;
+
+    if (id <= 0) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                       .entity("{\"error\":\"El campo 'id' es obligatorio y debe ser mayor a cero.\"}")
+                       .build();
+    }
+
+    try {
+        session = sessionFactory.openSession();
+        transaction = session.beginTransaction();
+
+        UsuariosBD usuario = session.get(UsuariosBD.class, id);
+
+        if (usuario == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                           .entity("{\"error\":\"Usuario no encontrado con id: " + id + "\"}")
+                           .build();
+        }
+
+        usuario.setActivo(false);
+        session.update(usuario);
+        transaction.commit();
+
+        return Response.ok("{\"message\":\"Usuario desactivado exitosamente\"}")
+                       .build();
+    } catch (Exception e) {
+        if (transaction != null) transaction.rollback();
         e.printStackTrace();
-    return Response.ok("{\"message\":\"no se pudo guardar el Usuario\"}")
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                       .entity("{\"error\":\"Error al desactivar el usuario: " + e.getMessage() + "\"}")
                        .build();
     } finally {
         if (session != null) session.close();
     }
+}
 
+
+
+@POST
+@Path("editar")
+@Produces(MediaType.APPLICATION_JSON)
+public Response editar(@FormParam("id") long id,
+                       @FormParam("nombre_usuario") String nombre_usuario,
+                       @FormParam("contraseña") String contraseña,
+                       @FormParam("rol") String rol,
+                       @FormParam("correo") String correo,
+                       @FormParam("fecha_creacion") String fecha_creacion,
+                       @FormParam("fecha_ultimo_acceso") String fecha_ultimo_acceso,
+                       @FormParam("activo") int activo) {
     
+    Session session = null;
+    Transaction transaction = null;
+
+    if (id <= 0) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                       .entity("{\"error\":\"El campo 'id' es obligatorio y debe ser mayor a cero.\"}")
+                       .build();
     }
-    @Path("eliminar")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response eliminar(@QueryParam("id") int id) {
-        Session session = null;
-        Transaction transaction = null;
 
-        if (id <= 0) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                           .entity("{\"error\":\"El campo 'id' es obligatorio y debe ser mayor a cero.\"}")
+    try {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date fechaCreacionParsed = fecha_creacion != null ? dateFormat.parse(fecha_creacion) : null;
+        Date fechaUltimoAccesoParsed = fecha_ultimo_acceso != null ? dateFormat.parse(fecha_ultimo_acceso) : null;
+
+        session = sessionFactory.openSession();
+        transaction = session.beginTransaction();
+
+        UsuariosBD usuario = session.get(UsuariosBD.class, id);
+        if (usuario == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                           .entity("{\"error\":\"Usuario no encontrado.\"}")
                            .build();
         }
 
-        try {
-            session = sessionFactory.openSession();
-            transaction = session.beginTransaction();
-
-            UsuariosBD usuario = session.get(UsuariosBD.class, id);
-
-            if (usuario == null) {
-                return Response.status(Response.Status.NOT_FOUND)
-                               .entity("{\"error\":\"Usuario no encontrado.\"}")
-                               .build();
-            }
-
-            usuario.setActivo(false);
-            session.update(usuario);
-            transaction.commit();
-
-            return Response.ok("{\"message\":\"Usuario desactivado exitosamente\"}")
-                           .build();
-        } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
-            e.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity("{\"error\":\"Error al desactivar el usuario\"}")
-                           .build();
-        } finally {
-            if (session != null) session.close();
+        if (nombre_usuario != null && !nombre_usuario.trim().isEmpty()) {
+            usuario.setNombre_usuario(nombre_usuario);
         }
+        if (contraseña != null && !contraseña.trim().isEmpty()) {
+            usuario.setContraseña(contraseña);
+        }
+        if (rol != null) {
+            usuario.setRol(rol);
+        }
+        if (correo != null && !correo.trim().isEmpty()) {
+            usuario.setCorreo(correo);
+        }
+        if (fechaCreacionParsed != null) {
+            usuario.setFecha_creacion(fechaCreacionParsed);
+        }
+        if (fechaUltimoAccesoParsed != null) {
+            usuario.setFecha_ultimo_acceso(fechaUltimoAccesoParsed);
+        }
+        usuario.setActivo(activo == 1);
+
+        session.update(usuario);
+        transaction.commit();
+
+        return Response.ok("{\"message\":\"Usuario actualizado exitosamente\"}")
+                       .build();
+    } catch (Exception e) {
+        if (transaction != null) transaction.rollback();
+        e.printStackTrace();
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                       .entity("{\"error\":\"Error al actualizar el usuario: " + e.getMessage() + "\"}")
+                       .build();
+    } finally {
+        if (session != null) session.close();
     }
-    @POST
-    @Path("editar")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response editar(@FormParam("id") int id,
-                           @FormParam("nombre_usuario") String nombre_usuario,
-                           @FormParam("contraseña") String contraseña,
-                           @FormParam("rol") String rol,
-                           @FormParam("correo") String correo,
-                           @FormParam("fecha_creacion") Date fecha_creacion,
-                           @FormParam("estado") String estado,
-                           @FormParam("fecha_ultimo_acceso") Date fecha_ultimo_acceso,
-                           @FormParam("activo") int activo) {
-        Session session = null;
-        Transaction transaction = null;
+}
 
-        if (id <= 0) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                           .entity("{\"error\":\"El campo 'id' es obligatorio y debe ser mayor a cero.\"}")
-                           .build();
-        }
-
-        try {
-            session = sessionFactory.openSession();
-            transaction = session.beginTransaction();
-
-            UsuariosBD usuario = session.get(UsuariosBD.class, id);
-            if (usuario == null) {
-                return Response.status(Response.Status.NOT_FOUND)
-                               .entity("{\"error\":\"Usuario no encontrado.\"}")
-                               .build();
-            }
-
-            if (nombre_usuario != null && !nombre_usuario.trim().isEmpty()) {
-                usuario.setNombre_usuario(nombre_usuario);
-            }
-            if (contraseña != null && !contraseña.trim().isEmpty()) {
-                usuario.setContraseña(contraseña);
-            }
-            if (rol != null) {
-                usuario.setRol(rol);
-            }
-            if (correo != null && !correo.trim().isEmpty()) {
-                usuario.setCorreo(correo);
-            }
-            if (fecha_creacion != null) {
-                usuario.setFecha_creacion(fecha_creacion);
-            }
-            if (estado != null && !estado.trim().isEmpty()) {
-                usuario.setEstado(estado);
-            }
-            if (fecha_ultimo_acceso != null) {
-                usuario.setFecha_ultimo_acceso(fecha_ultimo_acceso);
-            }
-            usuario.setActivo(true);
-
-            session.update(usuario);
-            transaction.commit();
-
-            return Response.ok("{\"message\":\"Usuario actualizado exitosamente\"}")
-                           .build();
-        } catch (Exception e) {
-            if (transaction != null) transaction.rollback();
-            e.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                           .entity("{\"error\":\"Error al actualizar el usuario\"}")
-                           .build();
-        } finally {
-            if (session != null) session.close();
-        }
-    }
 
 
 }
