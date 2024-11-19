@@ -28,7 +28,6 @@ public class Pagos {
            @FormParam("metodo_pago") String metodo_pago,
            @FormParam("fecha_pago") String fecha_pago) {
 
-      // Validaciones de entrada
       if (id_alumno <= 0) {
          return Response.status(Response.Status.BAD_REQUEST)
                  .entity("{\"error\":\"El campo 'id_alumno' es obligatorio y debe ser mayor a cero.\"}")
@@ -64,7 +63,7 @@ public class Pagos {
          pago.setMonto(monto);
          pago.setMetodo_pago(metodo_pago);
          pago.setFecha_pago(fechaPagoParsed);
-         pago.setActivos(true);  // Por defecto, el pago está activo
+         pago.setActivos(true);  
 
          session.save(pago);
          transaction.commit();
@@ -112,7 +111,7 @@ public class Pagos {
                     .build();
          }
 
-         pago.setActivos(false); // Desactivar el pago en lugar de eliminarlo
+         pago.setActivos(false); 
          session.update(pago);
          transaction.commit();
 
