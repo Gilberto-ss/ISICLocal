@@ -2,6 +2,7 @@ package Service;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import modelBD.PagosBD;
@@ -28,26 +29,6 @@ public class Pagos {
            @FormParam("metodo_pago") String metodo_pago,
            @FormParam("fecha_pago") String fecha_pago) {
 
-      if (id_alumno <= 0) {
-         return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'id_alumno' es obligatorio y debe ser mayor a cero.\"}")
-                 .build();
-      }
-      if (monto <= 0) {
-         return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'monto' es obligatorio y debe ser mayor a cero.\"}")
-                 .build();
-      }
-      if (metodo_pago == null || metodo_pago.trim().isEmpty()) {
-         return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'metodo_pago' es obligatorio.\"}")
-                 .build();
-      }
-      if (fecha_pago == null || fecha_pago.trim().isEmpty()) {
-         return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'fecha_pago' es obligatorio.\"}")
-                 .build();
-      }
 
       Session session = null;
       Transaction transaction = null;
@@ -86,44 +67,82 @@ public class Pagos {
       }
    }
 
-   @GET
-   @Path("eliminar")
-   @Produces(MediaType.APPLICATION_JSON)
-   public Response eliminar(@QueryParam("id") Long id) {
-      Session session = null;
-      Transaction transaction = null;
+@GET
+@Path("eliminar")
+@Produces(MediaType.APPLICATION_JSON)
+public Response eliminar(@QueryParam("id") Long id) {
+   Session session = null;
+   Transaction transaction = null;
 
-      if (id == null || id <= 0) {
+   if (id == null || id <= 0) {
+      return Response.status(Response.Status.BAD_REQUEST)
+              .entity("{\"error\":\"El campo 'id' es obligatorio y debe ser mayor a cero.\"}")
+              .build();
+   }
+
+   try {
+      session = sessionFactory.openSession();
+      transaction = session.beginTransaction();
+
+      PagosBD pago = session.get(PagosBD.class, id);
+
+      if (pago == null) {
+         return Response.status(Response.Status.NOT_FOUND)
+                 .entity("{\"error\":\"Pago no encontrado con id: " + id + "\"}")
+                 .build();
+      }
+
+      pago.setActivos(false); 
+      session.update(pago);
+      transaction.commit();
+
+      return Response.ok("{\"message\":\"Pago desactivado exitosamente\"}")
+              .build();
+   } catch (Exception e) {
+      if (transaction != null) {
+         transaction.rollback();
+      }
+      e.printStackTrace();
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+              .entity("{\"error\":\"Error al desactivar el pago: " + e.getMessage() + "\"}")
+              .build();
+   } finally {
+      if (session != null) {
+         session.close();
+      }
+   }
+}
+
+   @GET
+   @Path("historial/{id_alumno}")
+   @Produces(MediaType.APPLICATION_JSON)
+   public Response historial(@PathParam("id_alumno") int id_alumno) {
+      Session session = null;
+
+      if (id_alumno <= 0) {
          return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'id' es obligatorio y debe ser mayor a cero.\"}")
+                 .entity("{\"error\":\"El campo 'id_alumno' es obligatorio y debe ser mayor a cero.\"}")
                  .build();
       }
 
       try {
          session = sessionFactory.openSession();
-         transaction = session.beginTransaction();
+         List<PagosBD> pagos = session.createQuery("FROM PagosBD WHERE id_alumno = :id_alumno", PagosBD.class)
+                 .setParameter("id_alumno", id_alumno)
+                 .list();
 
-         PagosBD pago = session.get(PagosBD.class, id);
-
-         if (pago == null) {
+         if (pagos.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("{\"error\":\"Pago no encontrado con id: " + id + "\"}")
+                    .entity("{\"message\":\"No se encontraron pagos para el alumno con id: " + id_alumno + "\"}")
                     .build();
          }
 
-         pago.setActivos(false); 
-         session.update(pago);
-         transaction.commit();
-
-         return Response.ok("{\"message\":\"Pago desactivado exitosamente\"}")
+         return Response.ok(pagos) 
                  .build();
       } catch (Exception e) {
-         if (transaction != null) {
-            transaction.rollback();
-         }
          e.printStackTrace();
          return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                 .entity("{\"error\":\"Error al desactivar el pago: " + e.getMessage() + "\"}")
+                 .entity("{\"error\":\"Error al obtener el historial de pagos: " + e.getMessage() + "\"}")
                  .build();
       } finally {
          if (session != null) {

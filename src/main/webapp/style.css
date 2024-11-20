@@ -1,0 +1,83 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #a0a7ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+
+  
+  .login-container {
+    background-color: #dcdaf8;
+    padding: 50px;
+    border-radius: 50px;
+    box-shadow: 0 0 10px rgba(30, 255, 1, 0);
+    width: 300px;
+  }
+
+  section {
+    display: flex;
+    width: 70px;   
+    height: 70px;  
+    border-radius: 50%; 
+    overflow: hidden;  
+    margin: auto;
+}
+
+  h2 {
+    text-align: center;
+    background: linear-gradient(90deg, #ab9dff,#2f00ff,#000000,#ab9dff);
+    background-size: 400px;
+    word-spacing: 5px;
+    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text;
+    animation: animate 6s linear infinite;
+  }
+
+  @keyframes animate{
+    0%{
+        background-position: 0%;
+    }
+
+    100%{
+        background-position: 400%;
+    }
+  }
+  
+  .UserLogin {
+    margin-bottom: 15px;
+  }
+  
+  .UserLogin label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .UserLogin input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #011066;
+    border-radius: 7px;
+  }
+  
+  .UserLogin input:focus {
+    border-color: #000000da;
+  }
+  
+  .UserLogin button {
+    width: 106%;
+    padding: 10px;
+    background-color: #0311d3;
+    color: rgb(255, 255, 255);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .UserLogin button:hover {
+    background-color: #000000;
+  }
+  
