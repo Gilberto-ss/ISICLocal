@@ -15,6 +15,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PUT;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import modelBD.AlumnosBD;
 import modelBD.UsuariosBD;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -36,7 +37,7 @@ private static SessionFactory sessionFactory;
     }
 
     @POST
-    @Path("autenticar")
+    @Path("usuarios")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.APPLICATION_JSON)
     public Response autenticar(@FormParam("nombre_usuario") String nombre_usuario,
@@ -53,7 +54,7 @@ private static SessionFactory sessionFactory;
         try {
             session = sessionFactory.openSession();
             
-            String hql = "FROM UsuariosBD u WHERE u.nombre_usuario = :nombre AND u.contraseña = :contraseña";
+            String hql = "FROM UsuariosBD u WHERE u.nombre_usuario = :nombre AND u.contraseña = :contraseña AND u.activo =1";
             UsuariosBD usuario = (UsuariosBD) session.createQuery(hql)
                                                      .setParameter("nombre", nombre_usuario)
                                                      .setParameter("contraseña", contraseña)
@@ -76,4 +77,58 @@ private static SessionFactory sessionFactory;
             if (session != null) session.close();
         }
     }
+@POST
+@Path("alumnos")
+@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+@Produces(MediaType.APPLICATION_JSON)
+public Response alumnos(@FormParam("nombre") String nombre,
+                         @FormParam("matricula") String matricula) {
+
+    // Validación de los parámetros de entrada
+    if (nombre == null || nombre.trim().isEmpty() ||
+        matricula == null || matricula.trim().isEmpty()) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                       .entity("{\"error\":\"Nombre de alumno y matricula son obligatorios.\"}")
+                       .build();
+    }
+
+    Session session = null;
+
+    try {
+        // Abre una sesión de Hibernate
+        session = sessionFactory.openSession();
+
+        // Consulta HQL para buscar al alumno por nombre y matrícula
+        String hql = "FROM AlumnosBD a WHERE a.nombre = :nombre AND a.matricula = :matricula";
+        AlumnosBD alumno = (AlumnosBD) session.createQuery(hql)
+                                              .setParameter("nombre", nombre)
+                                              .setParameter("matricula", matricula)  // Cambiar 'contraseña' por 'matricula'
+                                              .uniqueResult();
+
+        // Si el alumno no se encuentra o las credenciales son incorrectas
+        if (alumno == null) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                           .entity("{\"error\":\"Alumno o matrícula incorrectos.\"}")
+                           .build();
+        }
+
+        // Respuesta exitosa con el ID del alumno
+        return Response.ok("{\"message\":\"Login exitoso\", \"id\": " + alumno.getId() + "}")
+                       .build();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        // Error al procesar la solicitud
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                       .entity("{\"error\":\"Error al procesar la solicitud de login.\"}")
+                       .build();
+
+    } finally {
+        // Cerrar la sesión de Hibernate
+        if (session != null) {
+            session.close();
+        }
+    }
+}
+
 }

@@ -125,7 +125,7 @@ public Response guardar(@FormParam("nombre_usuario") String nombre_usuario,
     @GET
     @Path("eliminar")
 @Produces(MediaType.APPLICATION_JSON)
-public Response eliminar(@QueryParam("id") int id) {
+public Response eliminar(@QueryParam("id") Long id) {
     Session session = null;
     Transaction transaction = null;
 
@@ -220,7 +220,7 @@ public Response editar(@FormParam("id") long id,
         if (fechaUltimoAccesoParsed != null) {
             usuario.setFecha_ultimo_acceso(fechaUltimoAccesoParsed);
         }
-        usuario.setActivo(activo == 1);
+        usuario.setActivo(activo == 1 ? true : false);
 
         session.update(usuario);
         transaction.commit();
