@@ -27,7 +27,6 @@ public class UsuariosBD {
     String rol;
     String correo;
     Date fecha_creacion;
-    Date fecha_ultimo_acceso;
     boolean activo;
 
     public Long getId() {
@@ -77,14 +76,7 @@ public class UsuariosBD {
     public void setFecha_creacion(Date fecha_creacion) {
         this.fecha_creacion = fecha_creacion;
     }
-    public Date getFecha_ultimo_acceso() {
-        return fecha_ultimo_acceso;
-    }
-
-    public void setFecha_ultimo_acceso(Date fecha_ultimo_acceso) {
-        this.fecha_ultimo_acceso = fecha_ultimo_acceso;
-    }
-
+ 
     public boolean isActivo() {
         return activo;
     }
