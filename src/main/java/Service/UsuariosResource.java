@@ -45,7 +45,6 @@ public Response guardar(@FormParam("nombre_usuario") String nombre_usuario,
                         @FormParam("rol") String rol,
                         @FormParam("correo") String correo,
                         @FormParam("fecha_creacion") String fecha_creacion,
-                        @FormParam("fecha_ultimo_acceso") String fecha_ultimo_acceso,
                         @FormParam("activo") int activo) {
 
     if (nombre_usuario == null || nombre_usuario.trim().isEmpty()) {
@@ -73,12 +72,6 @@ public Response guardar(@FormParam("nombre_usuario") String nombre_usuario,
                 .entity("{\"error\":\"fecha_creacion es obligatoria.\"}")
                 .build();
     }
-    if (fecha_ultimo_acceso == null || fecha_ultimo_acceso.trim().isEmpty()) {
-        return Response.status(Response.Status.BAD_REQUEST)
-                .entity("{\"error\":\"fecha_ultimo_acceso es obligatoria.\"}")
-                .build();
-    }
-
     if (activo == 0) {
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity("{\"error\":\"activo es obligatorio y debe ser mayor a 0.\"}")
@@ -90,7 +83,6 @@ public Response guardar(@FormParam("nombre_usuario") String nombre_usuario,
     try {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         Date fechaCreacionParsed = dateFormat.parse(fecha_creacion);
-        Date fechaUltimoAccesoParsed = dateFormat.parse(fecha_ultimo_acceso);
 
         session = sessionFactory.openSession();
         transaction = session.beginTransaction();
@@ -101,7 +93,6 @@ public Response guardar(@FormParam("nombre_usuario") String nombre_usuario,
         usuario.setRol(rol);
         usuario.setCorreo(correo);
         usuario.setFecha_creacion(fechaCreacionParsed);
-        usuario.setFecha_ultimo_acceso(fechaUltimoAccesoParsed);
         usuario.setActivo(activo == 1);  
 
         session.save(usuario);
@@ -175,7 +166,6 @@ public Response editar(@FormParam("id") long id,
                        @FormParam("rol") String rol,
                        @FormParam("correo") String correo,
                        @FormParam("fecha_creacion") String fecha_creacion,
-                       @FormParam("fecha_ultimo_acceso") String fecha_ultimo_acceso,
                        @FormParam("activo") int activo) {
     
     Session session = null;
@@ -190,7 +180,6 @@ public Response editar(@FormParam("id") long id,
     try {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         Date fechaCreacionParsed = fecha_creacion != null ? dateFormat.parse(fecha_creacion) : null;
-        Date fechaUltimoAccesoParsed = fecha_ultimo_acceso != null ? dateFormat.parse(fecha_ultimo_acceso) : null;
 
         session = sessionFactory.openSession();
         transaction = session.beginTransaction();
@@ -216,9 +205,6 @@ public Response editar(@FormParam("id") long id,
         }
         if (fechaCreacionParsed != null) {
             usuario.setFecha_creacion(fechaCreacionParsed);
-        }
-        if (fechaUltimoAccesoParsed != null) {
-            usuario.setFecha_ultimo_acceso(fechaUltimoAccesoParsed);
         }
         usuario.setActivo(activo == 1 ? true : false);
 
