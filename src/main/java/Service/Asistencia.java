@@ -54,12 +54,12 @@ public class Asistencia {
       }
       if (asistencia != 0 && activo != 1) {
          return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'asistencia' es obligatorio y debe ser mayor a cero.\"}")
+                 .entity("{\"error\":\"El campo 'asistencia' debe ser 0 (falso) o 1 (verdadero).\"}")
                  .build();
       }
       if (activo != 0 && activo != 1) {
          return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'activo' es obligatorio y debe ser mayor a cero.\"}")
+                 .entity("{\"error\":\"El campo 'activo' debe ser 0 (falso) o 1 (verdadero).\"}")
                  .build();
       }
      if (matricula_alumno <= 0) {
@@ -122,17 +122,23 @@ public class Asistencia {
          session = sessionFactory.openSession();
          transaction = session.beginTransaction();
 
-         AsistenciasBD asistencias = session.get(AsistenciasBD.class, matricula_alumno);
+        String hql = "FROM AsistenciasBD WHERE matricula_alumno = :matricula";
+        List<AsistenciasBD> asistenciasList = session.createQuery(hql)
+        .setParameter("matricula", matricula_alumno)
+        .list();
 
-         if (asistencias == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity("{\"error\":\"Asistencia no encontrado con matricula_alumno: " + matricula_alumno + "\"}")
-                    .build();
-         }
+        if (asistenciasList.isEmpty()) {
+        return Response.status(Response.Status.NOT_FOUND)
+            .entity("{\"error\":\"No se encontró asistencia con la matrícula: " + matricula_alumno + "\"}")
+            .build();
+        }
 
-         asistencias.setActivos(false); 
-         session.update(asistencias);
-         transaction.commit();
+        
+        for (AsistenciasBD asistencia : asistenciasList) {
+        asistencia.setActivos(false); 
+        session.update(asistencia); 
+        }
+        transaction.commit();
 
          return Response.ok("{\"message\":\"Asistencia desactivada exitosamente\"}")
                  .build();
