@@ -16,7 +16,7 @@ import javax.persistence.Table;
  * @author LENOVO
  */
 @Entity
-@Table(name = "asistencias")
+@Table(name = "asistencia")
 public class AsistenciasBD {
 
     @Id
@@ -24,6 +24,7 @@ public class AsistenciasBD {
     private Long id;
     
      int id_alumno;
+     int matricula_alumno;
      Date fecha;
      boolean asistencia;
      boolean activo;
@@ -44,6 +45,14 @@ public class AsistenciasBD {
         this.id_alumno = id_alumno;
     }
 
+    public int getMatricula_alumno() {
+        return matricula_alumno;
+    }
+
+    public void setMatricula_alumno(int matricula_alumno) {
+        this.matricula_alumno = matricula_alumno;
+    }
+    
     public Date getFecha() {
         return fecha;
     }
