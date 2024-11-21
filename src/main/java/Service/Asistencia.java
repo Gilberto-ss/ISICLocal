@@ -2,6 +2,7 @@ package Service;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.Consumes;
@@ -10,6 +11,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -29,14 +31,15 @@ public class Asistencia {
         sessionFactory = new Configuration().configure().buildSessionFactory();
     }
     
-    @POST
+   @POST
    @Path("guardar")
    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
    @Produces(MediaType.APPLICATION_JSON)
    public Response guardar(@FormParam("id_alumno") int id_alumno,
            @FormParam("fecha") String fecha,
            @FormParam("asistencia") int asistencia,
-           @FormParam("activo") int activo) {
+           @FormParam("activo") int activo,
+           @FormParam("matricula_alumno") int matricula_alumno){
 
       
       if (id_alumno <= 0) {
@@ -49,14 +52,19 @@ public class Asistencia {
                  .entity("{\"error\":\"El campo 'fecha' es obligatorio.\"}")
                  .build();
       }
-      if (asistencia <= 0) {
+      if (asistencia != 0 && activo != 1) {
          return Response.status(Response.Status.BAD_REQUEST)
                  .entity("{\"error\":\"El campo 'asistencia' es obligatorio y debe ser mayor a cero.\"}")
                  .build();
       }
-      if (activo <= 0) {
+      if (activo != 0 && activo != 1) {
          return Response.status(Response.Status.BAD_REQUEST)
                  .entity("{\"error\":\"El campo 'activo' es obligatorio y debe ser mayor a cero.\"}")
+                 .build();
+      }
+     if (matricula_alumno <= 0) {
+         return Response.status(Response.Status.BAD_REQUEST)
+                 .entity("{\"error\":\"El campo 'matricula_alumno' es obligatorio y debe ser mayor a cero.\"}")
                  .build();
       }
     
@@ -74,11 +82,12 @@ public class Asistencia {
          asistencias.setFecha(fechaParsed);
          asistencias.setAsistencia(true);
          asistencias.setActivos(true);
+         asistencias.setMatricula_alumno(matricula_alumno);
 
          session.save(asistencias);
          transaction.commit();
 
-         return Response.ok("{\"message\":\"la asistencia se guardado exitosamente\"}")
+         return Response.ok("{\"message\":\"\"La asistencia se ha guardado exitosamente.\"}")
                  .build();
          
         } catch (Exception e) {
@@ -99,13 +108,13 @@ public class Asistencia {
    @GET
    @Path("eliminar")
    @Produces(MediaType.APPLICATION_JSON)
-   public Response eliminar(@QueryParam("id") Long id) {
+   public Response eliminar(@QueryParam("matricula_alumno") int matricula_alumno) {
       Session session = null;
       Transaction transaction = null;
 
-      if (id == null || id <= 0) {
+      if (matricula_alumno <= 0) {
          return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'id' es obligatorio y debe ser mayor a cero.\"}")
+                 .entity("{\"error\":\"El campo 'matricula_alumno' es obligatorio y debe ser mayor a cero.\"}")
                  .build();
       }
 
@@ -113,11 +122,11 @@ public class Asistencia {
          session = sessionFactory.openSession();
          transaction = session.beginTransaction();
 
-         AsistenciasBD asistencias = session.get(AsistenciasBD.class, id);
+         AsistenciasBD asistencias = session.get(AsistenciasBD.class, matricula_alumno);
 
          if (asistencias == null) {
             return Response.status(Response.Status.NOT_FOUND)
-                    .entity("{\"error\":\"Asistencia no encontrado con id: " + id + "\"}")
+                    .entity("{\"error\":\"Asistencia no encontrado con matricula_alumno: " + matricula_alumno + "\"}")
                     .build();
          }
 
@@ -141,7 +150,47 @@ public class Asistencia {
          }
       }
    }
-}
+   
+         
+    @GET
+    @Path("/historialAsistencia/{id_alumno}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response HistorialAsistencia(@PathParam("id_alumno") int id_alumno) {
+    Session session = null;
+   
+    if (id_alumno == 0 || id_alumno <= 0) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"El campo 'id' es obligatorio y debe ser mayor a cero.\"}")
+                .build();
+    }
+
+    try {
+        session = sessionFactory.openSession();
+         List<AsistenciasBD> asitencias = session.createQuery("FROM AsistenciasBD WHERE id_alumno = :id_alumno", AsistenciasBD.class)
+                 .setParameter("id_alumno", id_alumno)
+                 .list();
+         
+          if (asitencias.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("{\"message\":\"No se encontraron registro para el alumno con id: " + id_alumno + "\"}")
+                    .build();
+         }
+
+         return Response.ok(asitencias) 
+                 .build();
+      } catch (Exception e) {
+         e.printStackTrace();
+         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                 .entity("{\"error\":\"Error al obtener el historial de asistencias: " + e.getMessage() + "\"}")
+                 .build();
+      } finally {
+         if (session != null) {
+            session.close();
+         }
+      }
+   }
+   }
+      
 
    
 
