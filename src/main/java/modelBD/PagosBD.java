@@ -27,6 +27,7 @@ public class PagosBD {
     Date fecha_pago;
     String metodo_pago;
     boolean activo;
+    int matricula_alumno;
 
     public Long getId() {
         return id;
@@ -68,12 +69,19 @@ public class PagosBD {
         this.metodo_pago = metodo_pago;
     }
 
-    public boolean isActivos() {
+    public boolean isActivo() {
         return activo;
     }
 
-    public void setActivos(boolean activos) {
-        this.activo = activos;
+    public void setActivo(boolean activo) {
+        this.activo = activo;
     }
-    
+
+    public int getMatricula() {
+        return matricula_alumno;
+    }
+
+    public void setMatricula(int matricula) {
+        this.matricula_alumno = matricula;
+    }
 }
