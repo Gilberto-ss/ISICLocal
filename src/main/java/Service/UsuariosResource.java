@@ -44,7 +44,6 @@ public Response guardar(@FormParam("nombre_usuario") String nombre_usuario,
                         @FormParam("contraseña") String contraseña,
                         @FormParam("rol") String rol,
                         @FormParam("correo") String correo,
-                        @FormParam("fecha_creacion") String fecha_creacion,
                         @FormParam("activo") int activo) {
 
     if (nombre_usuario == null || nombre_usuario.trim().isEmpty()) {
@@ -67,11 +66,6 @@ public Response guardar(@FormParam("nombre_usuario") String nombre_usuario,
                 .entity("{\"error\":\"correo es obligatorio.\"}")
                 .build();
     }
-    if (fecha_creacion == null || fecha_creacion.trim().isEmpty()) {
-        return Response.status(Response.Status.BAD_REQUEST)
-                .entity("{\"error\":\"fecha_creacion es obligatoria.\"}")
-                .build();
-    }
     if (activo == 0) {
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity("{\"error\":\"activo es obligatorio y debe ser mayor a 0.\"}")
@@ -82,8 +76,9 @@ public Response guardar(@FormParam("nombre_usuario") String nombre_usuario,
     Transaction transaction = null;
     try {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        Date fechaCreacionParsed = dateFormat.parse(fecha_creacion);
-
+        Date fechaCreacionParsed;
+        fechaCreacionParsed = new Date();
+        
         session = sessionFactory.openSession();
         transaction = session.beginTransaction();
 
