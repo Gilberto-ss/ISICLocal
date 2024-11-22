@@ -1,6 +1,6 @@
 package Service;
 
-import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import javax.ws.rs.*;
@@ -20,62 +20,68 @@ public class Pagos {
       sessionFactory = new Configuration().configure().buildSessionFactory();
    }
 
-@POST
-@Path("guardar")
-@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-@Produces(MediaType.APPLICATION_JSON)
-public Response guardar(@FormParam("matricula_alumno") int matricula_alumno,
-                        @FormParam("monto") double monto,
-                        @FormParam("metodo_pago") String metodo_pago) {
-    
-  if (matricula_alumno <= 0) {
-        return Response.status(Response.Status.BAD_REQUEST)
-                .entity("{\"error\":\"El campo 'matricula_alumno' es obligatorio y debe ser mayor a cero.\"}")
-                .build();
-    }
-  
-    Session session = null;
-    Transaction transaction = null;
+   @POST
+   @Path("guardar")
+   @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+   @Produces(MediaType.APPLICATION_JSON)
+   public Response guardar(@FormParam("matricula_alumno") int matricula_alumno,
+           @FormParam("monto") double monto,
+           @FormParam("metodo_pago") String metodo_pago) {
 
-    try {
-    
-        Date fecha_pago = new Date();
+      if (matricula_alumno <= 0) {
+         return Response.status(Response.Status.BAD_REQUEST)
+                 .entity("{\"error\":\"El campo 'matricula_alumno' es obligatorio y debe ser mayor a cero.\"}")
+                 .build();
+      }
+      if (monto <= 0) {
+         return Response.status(Response.Status.BAD_REQUEST)
+                 .entity("{\"error\":\"El campo 'monto' es obligatorio y debe ser mayor a cero.\"}")
+                 .build();
+      }
+      if (metodo_pago == null || metodo_pago.isEmpty() || !isValidMetodoPago(metodo_pago)) {
+         return Response.status(Response.Status.BAD_REQUEST)
+                 .entity("{\"error\":\"El campo 'metodo_pago' es obligatorio y debe ser uno de los siguientes: tarjeta, efectivo, transferencia.\"}")
+                 .build();
+      }
 
-        session = sessionFactory.openSession();
-        transaction = session.beginTransaction();
+      Transaction transaction = null;
 
-        PagosBD pagos = new PagosBD();
-        pagos.setMetodo_pago(metodo_pago);
-        pagos.setMonto(monto);
-        pagos.setMatricula(matricula_alumno);
-        pagos.setFecha_pago(fecha_pago);      
-        pagos.setActivo(true);     
+      try ( Session session = sessionFactory.openSession()) {
+         transaction = session.beginTransaction();
 
-        session.save(pagos);
-        transaction.commit();
+         PagosBD pagos = new PagosBD();
+         pagos.setMetodo_pago(metodo_pago);
+         pagos.setMonto(monto);
+         pagos.setMatricula(matricula_alumno);
+         pagos.setFecha_pago(new Date());
+         pagos.setActivo(true);
 
-        return Response.ok("{\"message\":\"El pago se ha guardado correctamente.\"}")
-                .build();
+         session.save(pagos);
+         transaction.commit();
 
-    } catch (Exception e) {
-        if (transaction != null) {
+         return Response.ok("{\"message\":\"El pago se ha guardado correctamente.\"}").build();
+
+      } catch (Exception e) {
+         if (transaction != null) {
             transaction.rollback();
-        }
-        e.printStackTrace();
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity("{\"error\":\"No se logro guardar el pago: " + e.getMessage() + "\"}")
-                .build();
-    } finally {
-        if (session != null) {
-            session.close();
-        }
-    }
-}
+         }
+         e.printStackTrace();
+         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                 .entity("{\"error\":\"No se logró guardar el pago: " + e.getMessage() + "\"}")
+                 .build();
+      }
+   }
+
+   private boolean isValidMetodoPago(String metodo_pago) {
+      List<String> metodosValidos = Arrays.asList("tarjeta", "efectivo", "transferencia");
+      return metodosValidos.contains(metodo_pago);
+   }
 
    @GET
    @Path("eliminar")
    @Produces(MediaType.APPLICATION_JSON)
-   public Response eliminar(@QueryParam("matricula_alumno") int matricula_alumno) {
+   public Response eliminar(@QueryParam("matricula_alumno") int matricula_alumno
+   ) {
       Session session = null;
       Transaction transaction = null;
 
