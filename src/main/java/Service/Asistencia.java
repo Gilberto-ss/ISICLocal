@@ -1,8 +1,11 @@
 package Service;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.Consumes;
@@ -32,78 +35,54 @@ public class Asistencia {
     }
     
    @POST
-   @Path("guardar")
-   @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-   @Produces(MediaType.APPLICATION_JSON)
-   public Response guardar(@FormParam("id_alumno") int id_alumno,
-           @FormParam("fecha") String fecha,
-           @FormParam("asistencia") int asistencia,
-           @FormParam("activo") int activo,
-           @FormParam("matricula_alumno") int matricula_alumno){
+@Path("guardar")
+@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+@Produces(MediaType.APPLICATION_JSON)
+public Response guardar(@FormParam("matricula_alumno") int matricula_alumno) {
+  
+    if (matricula_alumno <= 0) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"El campo 'matricula_alumno' es obligatorio y debe ser mayor a cero.\"}")
+                .build();
+    }
 
-      
-      if (id_alumno <= 0) {
-         return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'id_alumno' es obligatorio y debe ser mayor a cero.\"}")
-                 .build();
-      }
-      if (fecha == null || fecha.trim().isEmpty()) {
-         return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'fecha' es obligatorio.\"}")
-                 .build();
-      }
-      if (asistencia != 0 && activo != 1) {
-         return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'asistencia' debe ser 0 (falso) o 1 (verdadero).\"}")
-                 .build();
-      }
-      if (activo != 0 && activo != 1) {
-         return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'activo' debe ser 0 (falso) o 1 (verdadero).\"}")
-                 .build();
-      }
-     if (matricula_alumno <= 0) {
-         return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'matricula_alumno' es obligatorio y debe ser mayor a cero.\"}")
-                 .build();
-      }
+    Session session = null;
+    Transaction transaction = null;
+
+    try {
     
-      Session session = null;
-      Transaction transaction = null;
-      try {
-         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-         Date fechaParsed = dateFormat.parse(fecha);
+        Date fechaActual = new Date();
 
-         session = sessionFactory.openSession();
-         transaction = session.beginTransaction();
+        session = sessionFactory.openSession();
+        transaction = session.beginTransaction();
 
-         AsistenciasBD asistencias = new AsistenciasBD();
-         asistencias.setId_alumno(id_alumno);
-         asistencias.setFecha(fechaParsed);
-         asistencias.setAsistencia(true);
-         asistencias.setActivos(true);
-         asistencias.setMatricula_alumno(matricula_alumno);
+        AsistenciasBD asistencias = new AsistenciasBD();
+        asistencias.setMatricula_alumno(matricula_alumno);
+        asistencias.setFecha(fechaActual); 
+        asistencias.setAsistencia(1);     
+        asistencias.setActivos(true);     
 
-         session.save(asistencias);
-         transaction.commit();
+        session.save(asistencias);
+        transaction.commit();
 
-         return Response.ok("{\"message\":\"\"La asistencia se ha guardado exitosamente.\"}")
-                 .build();
-         
-        } catch (Exception e) {
-         if (transaction != null) {
+        return Response.ok("{\"message\":\"La asistencia se ha guardado exitosamente.\"}")
+                .build();
+
+    } catch (Exception e) {
+        if (transaction != null) {
             transaction.rollback();
-         }
-         e.printStackTrace();
-         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                 .entity("{\"error\":\"No se logro registrar la asistencia: " + e.getMessage() + "\"}")
-                 .build();
-      } finally {
-         if (session != null) {
+        }
+        e.printStackTrace();
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("{\"error\":\"No se logró registrar la asistencia: " + e.getMessage() + "\"}")
+                .build();
+    } finally {
+        if (session != null) {
             session.close();
-         }
-      }
-   }
+        }
+    }
+}
+
    
    @GET
    @Path("eliminar")
@@ -158,43 +137,56 @@ public class Asistencia {
    }
    
          
-    @GET
-    @Path("/historialAsistencia/{id_alumno}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response HistorialAsistencia(@PathParam("id_alumno") int id_alumno) {
+   @GET
+@Path("/historialAsistencia/{matricula_alumno}")
+@Produces(MediaType.APPLICATION_JSON)
+public Response HistorialAsistencia(@PathParam("matricula_alumno") int matricula_alumno) {
     Session session = null;
-   
-    if (id_alumno == 0 || id_alumno <= 0) {
+
+    if (matricula_alumno <= 0) {
         return Response.status(Response.Status.BAD_REQUEST)
-                .entity("{\"error\":\"El campo 'id' es obligatorio y debe ser mayor a cero.\"}")
+                .entity("{\"error\":\"El campo 'matricula_alumno' es obligatorio y debe ser mayor a cero.\"}")
                 .build();
     }
 
     try {
         session = sessionFactory.openSession();
-         List<AsistenciasBD> asitencias = session.createQuery("FROM AsistenciasBD WHERE id_alumno = :id_alumno", AsistenciasBD.class)
-                 .setParameter("id_alumno", id_alumno)
-                 .list();
-         
-          if (asitencias.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND)
-                    .entity("{\"message\":\"No se encontraron registro para el alumno con id: " + id_alumno + "\"}")
-                    .build();
-         }
+        List<AsistenciasBD> asistencias = session.createQuery(
+                "FROM AsistenciasBD WHERE matricula_alumno = :matricula_alumno", AsistenciasBD.class)
+                .setParameter("matricula_alumno", matricula_alumno)
+                .list();
 
-         return Response.ok(asitencias) 
-                 .build();
-      } catch (Exception e) {
-         e.printStackTrace();
-         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                 .entity("{\"error\":\"Error al obtener el historial de asistencias: " + e.getMessage() + "\"}")
-                 .build();
-      } finally {
-         if (session != null) {
+        if (asistencias.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("{\"message\":\"No se encontraron registros para el alumno con matrícula: " + matricula_alumno + "\"}")
+                    .build();
+        }
+
+        // Convertir la lista a un formato JSON manualmente si es necesario
+        List<Map<String, Object>> resultado = new ArrayList<>();
+        for (AsistenciasBD asistencia : asistencias) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("matricula_alumno", asistencia.getMatricula_alumno());
+            item.put("fecha", asistencia.getFecha());
+            item.put("asistencia", asistencia.getAsistencia());
+            item.put("activo", asistencia.isActivos());
+            resultado.add(item);
+        }
+
+        return Response.ok(resultado)
+                .build();
+    } catch (Exception e) {
+        e.printStackTrace();
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("{\"error\":\"Error al obtener el historial de asistencias: " + e.getMessage() + "\"}")
+                .build();
+    } finally {
+        if (session != null) {
             session.close();
-         }
-      }
-   }
+        }
+    }
+}
+
    }
       
 
