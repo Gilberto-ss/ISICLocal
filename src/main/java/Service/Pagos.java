@@ -20,54 +20,57 @@ public class Pagos {
       sessionFactory = new Configuration().configure().buildSessionFactory();
    }
 
-   @POST
-   @Path("guardar")
-   @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-   @Produces(MediaType.APPLICATION_JSON)
-   public Response guardar(@FormParam("id_alumno") int id_alumno,
-           @FormParam("monto") double monto,
-           @FormParam("metodo_pago") String metodo_pago,
-           @FormParam("fecha_pago") String fecha_pago,
-           @FormParam("activo") boolean activo,
-           @FormParam("matricula") int matricula) {
+@POST
+@Path("guardar")
+@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+@Produces(MediaType.APPLICATION_JSON)
+public Response guardar(@FormParam("matricula_alumno") int matricula_alumno,
+                        @FormParam("monto") double monto,
+                        @FormParam("metodo_pago") String metodo_pago) {
+    
+  if (matricula_alumno <= 0) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"El campo 'matricula_alumno' es obligatorio y debe ser mayor a cero.\"}")
+                .build();
+    }
+  
+    Session session = null;
+    Transaction transaction = null;
 
-      Session session = null;
-      Transaction transaction = null;
-      try {
-         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-         Date fechaPagoParsed = dateFormat.parse(fecha_pago);
+    try {
+    
+        Date fecha_pago = new Date();
 
-         session = sessionFactory.openSession();
-         transaction = session.beginTransaction();
+        session = sessionFactory.openSession();
+        transaction = session.beginTransaction();
 
-         PagosBD pago = new PagosBD();
-         pago.setId_alumno(id_alumno);
-         pago.setMonto(monto);
-         pago.setMetodo_pago(metodo_pago);
-         pago.setFecha_pago(fechaPagoParsed);
-         pago.setMatricula(matricula);
-         pago.setActivo(true);
+        PagosBD pagos = new PagosBD();
+        pagos.setMetodo_pago(metodo_pago);
+        pagos.setMonto(monto);
+        pagos.setMatricula(matricula_alumno);
+        pagos.setFecha_pago(fecha_pago);      
+        pagos.setActivo(true);     
 
-         session.save(pago);
-         transaction.commit();
+        session.save(pagos);
+        transaction.commit();
 
-         return Response.ok("{\"message\":\"Pago guardado exitosamente\"}")
-                 .build();
+        return Response.ok("{\"message\":\"El pago se ha guardado correctamente.\"}")
+                .build();
 
-      } catch (Exception e) {
-         if (transaction != null) {
+    } catch (Exception e) {
+        if (transaction != null) {
             transaction.rollback();
-         }
-         e.printStackTrace();
-         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                 .entity("{\"error\":\"No se pudo guardar el pago: " + e.getMessage() + "\"}")
-                 .build();
-      } finally {
-         if (session != null) {
+        }
+        e.printStackTrace();
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("{\"error\":\"No se logro guardar el pago: " + e.getMessage() + "\"}")
+                .build();
+    } finally {
+        if (session != null) {
             session.close();
-         }
-      }
-   }
+        }
+    }
+}
 
    @GET
    @Path("eliminar")
@@ -86,7 +89,7 @@ public class Pagos {
          session = sessionFactory.openSession();
          transaction = session.beginTransaction();
 
-         String hql = "FROM AsistenciasBD WHERE matricula_alumno = :matricula";
+         String hql = "FROM PagosBD WHERE matricula_alumno = :matricula";
          List<PagosBD> pagosList = session.createQuery(hql)
                  .setParameter("matricula", matricula_alumno)
                  .list();
