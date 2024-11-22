@@ -1,5 +1,6 @@
 package Service;
 
+import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -142,6 +143,7 @@ public Response guardar(@FormParam("matricula_alumno") int matricula_alumno) {
 public Response HistorialAsistencia(@QueryParam("matricula_alumno") int matricula_alumno) {
     Session session = null;
 
+    // Validación de entrada
     if (matricula_alumno <= 0) {
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity("{\"error\":\"El campo 'matricula_alumno' es obligatorio y debe ser mayor a cero.\"}")
@@ -151,11 +153,13 @@ public Response HistorialAsistencia(@QueryParam("matricula_alumno") int matricul
     try {
         session = sessionFactory.openSession();
 
+        // Consulta HQL para obtener las asistencias
         String hql = "FROM AsistenciasBD WHERE matricula_alumno = :matricula_alumno";
         List<AsistenciasBD> asistencias = session.createQuery(hql, AsistenciasBD.class)
                 .setParameter("matricula_alumno", matricula_alumno)
                 .getResultList();
 
+        // Verificar si no se encontraron asistencias
         if (asistencias.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
                     .entity("{\"message\":\"No se encontraron registros para el alumno con matrícula: " + matricula_alumno + "\"}")
@@ -173,8 +177,12 @@ public Response HistorialAsistencia(@QueryParam("matricula_alumno") int matricul
             resultado.add(item);
         }
 
-        // Retornar la lista de asistencias en JSON
-        return Response.ok(resultado).build();
+        // Serializar las asistencias a JSON usando Gson
+        Gson gson = new Gson();
+        String asistenciasJson = gson.toJson(resultado);
+
+        // Retornar la respuesta con el JSON generado
+        return Response.ok(asistenciasJson).build();
 
     } catch (Exception e) {
         e.printStackTrace();
@@ -187,7 +195,6 @@ public Response HistorialAsistencia(@QueryParam("matricula_alumno") int matricul
         }
     }
 }
-
    }
       
 
