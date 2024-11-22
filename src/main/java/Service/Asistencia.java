@@ -1,6 +1,5 @@
 package Service;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -137,10 +136,10 @@ public Response guardar(@FormParam("matricula_alumno") int matricula_alumno) {
    }
    
          
-   @GET
-@Path("/historialAsistencia/{matricula_alumno}")
+@GET
+@Path("historialAsistencia")
 @Produces(MediaType.APPLICATION_JSON)
-public Response HistorialAsistencia(@PathParam("matricula_alumno") int matricula_alumno) {
+public Response HistorialAsistencia(@QueryParam("matricula_alumno") int matricula_alumno) {
     Session session = null;
 
     if (matricula_alumno <= 0) {
@@ -151,10 +150,11 @@ public Response HistorialAsistencia(@PathParam("matricula_alumno") int matricula
 
     try {
         session = sessionFactory.openSession();
-        List<AsistenciasBD> asistencias = session.createQuery(
-                "FROM AsistenciasBD WHERE matricula_alumno = :matricula_alumno", AsistenciasBD.class)
+
+        String hql = "FROM AsistenciasBD WHERE matricula_alumno = :matricula_alumno";
+        List<AsistenciasBD> asistencias = session.createQuery(hql, AsistenciasBD.class)
                 .setParameter("matricula_alumno", matricula_alumno)
-                .list();
+                .getResultList();
 
         if (asistencias.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND)
@@ -162,7 +162,7 @@ public Response HistorialAsistencia(@PathParam("matricula_alumno") int matricula
                     .build();
         }
 
-        // Convertir la lista a un formato JSON manualmente si es necesario
+        // Convertir las asistencias a formato JSON
         List<Map<String, Object>> resultado = new ArrayList<>();
         for (AsistenciasBD asistencia : asistencias) {
             Map<String, Object> item = new HashMap<>();
@@ -173,8 +173,9 @@ public Response HistorialAsistencia(@PathParam("matricula_alumno") int matricula
             resultado.add(item);
         }
 
-        return Response.ok(resultado)
-                .build();
+        // Retornar la lista de asistencias en JSON
+        return Response.ok(resultado).build();
+
     } catch (Exception e) {
         e.printStackTrace();
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
