@@ -23,10 +23,9 @@ public class AsistenciasBD {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-     int id_alumno;
      int matricula_alumno;
      Date fecha;
-     boolean asistencia;
+     int asistencia;
      boolean activo;
 
     public Long getId() {
@@ -35,14 +34,6 @@ public class AsistenciasBD {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public int getId_alumno() {
-        return id_alumno;
-    }
-
-    public void setId_alumno(int id_alumno) {
-        this.id_alumno = id_alumno;
     }
 
     public int getMatricula_alumno() {
@@ -61,13 +52,14 @@ public class AsistenciasBD {
         this.fecha = fecha;
     }
 
-    public boolean isAsistencia() {
+    public int getAsistencia() {
         return asistencia;
     }
 
-    public void setAsistencia(boolean asistencia) {
+    public void setAsistencia(int asistencia) {
         this.asistencia = asistencia;
     }
+
 
     public boolean isActivos() {
         return activo;
