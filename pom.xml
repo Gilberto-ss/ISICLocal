@@ -57,6 +57,11 @@
             <artifactId>javax.persistence-api</artifactId>
             <version>2.2</version> <!-- Verifica la última versión -->
         </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.8.9</version>
+        </dependency>
     </dependencies>
 
     <build>
