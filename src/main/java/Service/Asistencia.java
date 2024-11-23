@@ -18,6 +18,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import modelBD.AlumnosBD;
 import modelBD.AsistenciasBD;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -55,12 +56,30 @@ public Response guardar(@FormParam("matricula_alumno") int matricula_alumno) {
 
         session = sessionFactory.openSession();
         transaction = session.beginTransaction();
+        
+        Long idAlumno = (Long) session.createQuery("SELECT a.id FROM AlumnosBD a WHERE a.matricula = :matricula")
+        .setParameter("matricula", matricula_alumno)
+        .uniqueResult();
+        
+        if (idAlumno == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("{\"error\":\"No se encontró un alumno con la matrícula proporcionada.\"}")
+                    .build();
+        }
+        
+ AlumnosBD alumno = session.get(AlumnosBD.class, idAlumno);
+        if (alumno == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("{\"error\":\"No se encontró un alumno con el ID proporcionado.\"}")
+                    .build();
+        }
 
         AsistenciasBD asistencias = new AsistenciasBD();
         asistencias.setMatricula_alumno(matricula_alumno);
+        asistencias.setNombre(alumno.getNombre());
         asistencias.setFecha(fechaActual); 
         asistencias.setAsistencia(1);     
-        asistencias.setActivos(true);     
+        asistencias.setActivo(true);     
 
         session.save(asistencias);
         transaction.commit();
@@ -114,7 +133,7 @@ public Response guardar(@FormParam("matricula_alumno") int matricula_alumno) {
 
         
         for (AsistenciasBD asistencia : asistenciasList) {
-        asistencia.setActivos(false); 
+        asistencia.setActivo(false); 
         session.update(asistencia); 
         }
         transaction.commit();
@@ -172,7 +191,7 @@ public Response HistorialAsistencia(@QueryParam("matricula_alumno") int matricul
             item.put("matricula_alumno", asistencia.getMatricula_alumno());
             item.put("fecha", asistencia.getFecha());
             item.put("asistencia", asistencia.getAsistencia());
-            item.put("activo", asistencia.isActivos());
+            item.put("activo", asistencia.isActivo());
             resultado.add(item);
         }
 
@@ -195,8 +214,3 @@ public Response HistorialAsistencia(@QueryParam("matricula_alumno") int matricul
     }
 }
    }
-      
-
-   
-
-

@@ -16,61 +16,73 @@ public class Pagos {
 
    private static SessionFactory sessionFactory;
 
+static {
+    try {
+        sessionFactory = new Configuration().configure().buildSessionFactory();
+    } catch (Throwable ex) {
+        throw new ExceptionInInitializerError(ex);
+    }
+}
+
+public static SessionFactory getSessionFactory() {
+    return sessionFactory;
+}
+
+
    static {
       sessionFactory = new Configuration().configure().buildSessionFactory();
    }
 
-   @POST
-   @Path("guardar")
-   @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-   @Produces(MediaType.APPLICATION_JSON)
-   public Response guardar(@FormParam("matricula_alumno") int matricula_alumno,
-           @FormParam("monto") double monto,
-           @FormParam("metodo_pago") String metodo_pago) {
+  @POST
+@Path("guardar")
+@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+@Produces(MediaType.APPLICATION_JSON)
+public Response guardar(@FormParam("matricula_alumno") int matricula_alumno,
+                        @FormParam("monto") double monto,
+                        @FormParam("metodo_pago") String metodo_pago) {
+    if (matricula_alumno <= 0) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"El campo 'matricula_alumno' es obligatorio y debe ser mayor a cero.\"}")
+                .build();
+    }
+    if (monto <= 0) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"El campo 'monto' es obligatorio y debe ser mayor a cero.\"}")
+                .build();
+    }
+    if (metodo_pago == null || metodo_pago.isEmpty() || !isValidMetodoPago(metodo_pago)) {
+        return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"El campo 'metodo_pago' es obligatorio y debe ser válido.\"}")
+                .build();
+    }
 
-      if (matricula_alumno <= 0) {
-         return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'matricula_alumno' es obligatorio y debe ser mayor a cero.\"}")
-                 .build();
-      }
-      if (monto <= 0) {
-         return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'monto' es obligatorio y debe ser mayor a cero.\"}")
-                 .build();
-      }
-      if (metodo_pago == null || metodo_pago.isEmpty() || !isValidMetodoPago(metodo_pago)) {
-         return Response.status(Response.Status.BAD_REQUEST)
-                 .entity("{\"error\":\"El campo 'metodo_pago' es obligatorio y debe ser uno de los siguientes: tarjeta, efectivo, transferencia.\"}")
-                 .build();
-      }
+    Transaction transaction = null;
 
-      Transaction transaction = null;
+    try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        transaction = session.beginTransaction();
 
-      try ( Session session = sessionFactory.openSession()) {
-         transaction = session.beginTransaction();
+        PagosBD pagos = new PagosBD();
+        pagos.setMetodo_pago(metodo_pago);
+        pagos.setMonto(monto);
+        pagos.setMatricula(matricula_alumno);
+        pagos.setFecha_pago(new Date());
+        pagos.setActivo(true);
 
-         PagosBD pagos = new PagosBD();
-         pagos.setMetodo_pago(metodo_pago);
-         pagos.setMonto(monto);
-         pagos.setMatricula(matricula_alumno);
-         pagos.setFecha_pago(new Date());
-         pagos.setActivo(true);
+        session.save(pagos);
+        transaction.commit();
 
-         session.save(pagos);
-         transaction.commit();
-
-         return Response.ok("{\"message\":\"El pago se ha guardado correctamente.\"}").build();
-
-      } catch (Exception e) {
-         if (transaction != null) {
+        return Response.ok("{\"message\":\"El pago se ha guardado correctamente.\"}").build();
+    } catch (Exception e) {
+        if (transaction != null) {
             transaction.rollback();
-         }
-         e.printStackTrace();
-         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                 .entity("{\"error\":\"No se logró guardar el pago: " + e.getMessage() + "\"}")
-                 .build();
-      }
-   }
+        }
+        e.printStackTrace();
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("{\"error\":\"No se logró guardar el pago: " + e.getMessage() + "\"}")
+                .build();
+    }
+}
+
 
    private boolean isValidMetodoPago(String metodo_pago) {
       List<String> metodosValidos = Arrays.asList("tarjeta", "efectivo", "transferencia");

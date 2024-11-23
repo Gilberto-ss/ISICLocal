@@ -27,6 +27,7 @@ public class AsistenciasBD {
      Date fecha;
      int asistencia;
      boolean activo;
+     String nombre;
 
     public Long getId() {
         return id;
@@ -43,7 +44,7 @@ public class AsistenciasBD {
     public void setMatricula_alumno(int matricula_alumno) {
         this.matricula_alumno = matricula_alumno;
     }
-    
+
     public Date getFecha() {
         return fecha;
     }
@@ -60,14 +61,22 @@ public class AsistenciasBD {
         this.asistencia = asistencia;
     }
 
-
-    public boolean isActivos() {
+    public boolean isActivo() {
         return activo;
     }
 
-    public void setActivos(boolean activos) {
-        this.activo = activos;
+    public void setActivo(boolean activo) {
+        this.activo = activo;
     }
-     
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    
      
 }
